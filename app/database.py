@@ -4,16 +4,25 @@ import sqlite3
 
 class Database:
 
-    def __init__(self, db_name):
+    def __init__(self, db_name: str):
         self.db_name = db_name
         self.connection = sqlite3.connect(self.db_name)
 
-    def execute(self, query):
+    def columns(self, table):
+        p = self.execute(f"SELECT * FROM {table}")
+        columns = [description[0] for description in p.description]
+
+        return columns
+
+    def execute(self, query, *args):
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        return cursor.execute(query, *args)
 
     def __del__(self):
         self.connection.close()
+
+    def commit(self):
+        self.connection.commit()
 
 
 class JsonDatabase:
