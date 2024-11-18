@@ -4,7 +4,8 @@ import time
 from datetime import datetime
 
 from PyQt6 import uic, QtGui
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QFont
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QCheckBox, QFrame, QScrollArea, \
     QLayout, QPushButton
 
@@ -123,7 +124,7 @@ class Window(QWidget):
 
         self.params = QWidget(self.scrollArea)
         self.params.setFixedWidth(190)
-        self.params.setStyleSheet("font-color: black")
+        self.params.setStyleSheet("font-color: black; background-color: transparent")
         self.params.move(300, 200)
         self.scrollArea.setWidget(self.params)
 
@@ -134,6 +135,7 @@ class Window(QWidget):
         self.cb_change()
 
         self.displayItems.setWidgetResizable(True)
+        self.displayItems.setStyleSheet("background-color: #49507f;")
 
         self.chooseAccessories.currentTextChanged.connect(self.cb_change)
 
@@ -183,7 +185,7 @@ class Window(QWidget):
                 param_names_ru = []
                 for k, v in PARAMS[table_name].items():
                     param_names_ru.append(k)
-                for i, p in enumerate(product[2:-2]):
+                for i, p in enumerate(product[2:-3]):
                     params_layout.addWidget(QLabel(f"{param_names_ru[i]}: {p}"))
                 params_widget.setLayout(params_layout)
                 params_widget.move(310, 20)
@@ -194,8 +196,17 @@ class Window(QWidget):
                 add_button.move(410, 310)
                 add_button.setFixedSize(171, 31)
 
+                # Ссылка на Маркет
+                link_text = 'Товар на <span style="color: red;">Я</span>.Маркете'
+                market_link = QLabel(
+                    f'<a href="{product[-2]}" style="color: white; text-decoration: none;">{link_text}</a>', w
+                )
+                market_link.setOpenExternalLinks(True)
+                market_link.move(410, 350)
+                market_link.setFont(QFont("Montserrat Semibold", 12))
+
                 # Изображение товара
-                pixmap = QPixmap('images/img.jpg')
+                pixmap = QPixmap(f'images/img.jpg')
 
                 image = QLabel(w)
                 image.move(20, 20)
@@ -264,45 +275,86 @@ class Window(QWidget):
                     cb = QCheckBox(t)
                     self.layout.addWidget(cb)
 
-            case "Материнская плата":
+            case "Кулер для ЦП":
+
                 self.layout.addWidget(QLabel("Бренд"))
                 brands = set(map(lambda x: x[2], data))
+                for brand in brands:
+                    cb = QCheckBox(brand)
+                    self.layout.addWidget(cb)
 
+                self.layout.addWidget(QLabel("Максимальная рассеиваемая\nмощность (TDP), Вт"))
+                tdp = set(map(lambda x: x[3], data))
+                for t in sorted(tdp, reverse=True):
+                    cb = QCheckBox(str(t))
+                    self.layout.addWidget(cb)
+
+                self.layout.addWidget(QLabel("Сокет"))
+                sockets = set(map(lambda x: x[4], data))
+                for socket in sorted(sockets):
+                    cb = QCheckBox(socket)
+                    self.layout.addWidget(cb)
+
+            case "Материнская плата":
+
+                self.layout.addWidget(QLabel("Бренд"))
+                brands = set(map(lambda x: x[2], data))
                 for brand in brands:
                     cb = QCheckBox(brand)
                     self.layout.addWidget(cb)
 
                 self.layout.addWidget(QLabel("Сокет"))
                 sockets = set(map(lambda x: x[3], data))
-
                 for socket in sockets:
                     cb = QCheckBox(socket)
                     self.layout.addWidget(cb)
 
                 self.layout.addWidget(QLabel("Чипсет"))
                 chipsets = set(map(lambda x: x[4], data))
-
                 for chipset in chipsets:
                     cb = QCheckBox(chipset)
                     self.layout.addWidget(cb)
 
                 self.layout.addWidget(QLabel("Беспроводные интерфейсы"))
                 interfaces = set(map(lambda x: x[5], data))
-
                 for interface in interfaces:
                     cb = QCheckBox(interface)
                     self.layout.addWidget(cb)
 
                 self.layout.addWidget(QLabel("Форм-фактор"))
                 form_factors = set(map(lambda x: x[6], data))
-
                 for form_factor in form_factors:
                     cb = QCheckBox(form_factor)
                     self.layout.addWidget(cb)
 
             case "Оперативная память":
-                pass
+
+                self.layout.addWidget(QLabel("Бренд"))
+                brands = set(map(lambda x: x[2], data))
+                for brand in brands:
+                    cb = QCheckBox(brand)
+                    self.layout.addWidget(cb)
+
+                self.layout.addWidget(QLabel("Объем памяти, Гб"))
+                memories = set(map(lambda x: x[3], data))
+                for memory in sorted(memories, reverse=True):
+                    cb = QCheckBox(str(memory))
+                    self.layout.addWidget(cb)
+
+                self.layout.addWidget(QLabel("Тип памяти"))
+                types = set(map(lambda x: x[4], data))
+                for t in sorted(types):
+                    cb = QCheckBox(t)
+                    self.layout.addWidget(cb)
+
+                self.layout.addWidget(QLabel("Частота памяти, МГц"))
+                frequencies = set(map(lambda x: x[5], data))
+                for frequency in sorted(frequencies, reverse=True):
+                    cb = QCheckBox(str(frequency))
+                    self.layout.addWidget(cb)
+
             case "Видеокарта":
+
                 self.layout.addWidget(QLabel("Бренд"))
                 brands = set(map(lambda x: x[2], data))
                 for brand in sorted(brands):
@@ -328,43 +380,52 @@ class Window(QWidget):
                     self.layout.addWidget(cb)
 
             case "Устройство памяти":
+
                 self.layout.addWidget(QLabel("Бренд"))
                 brands = set(map(lambda x: x[2], data))
-
                 for brand in brands:
                     cb = QCheckBox(brand)
                     self.layout.addWidget(cb)
 
                 self.layout.addWidget(QLabel("Емкость, Гб"))
                 capacities = set(map(lambda x: x[3], data))
-
                 for capacity in sorted(capacities, reverse=True):
                     cb = QCheckBox(str(capacity))
                     self.layout.addWidget(cb)
 
             case "Блок питания":
-                pass
-            case "Кулер для ЦП":
+
                 self.layout.addWidget(QLabel("Бренд"))
                 brands = set(map(lambda x: x[2], data))
                 for brand in brands:
                     cb = QCheckBox(brand)
                     self.layout.addWidget(cb)
 
-                self.layout.addWidget(QLabel("Максимальная рассеиваемая\nмощность (TDP), Вт"))
-                tdp = set(map(lambda x: x[3], data))
-                for t in sorted(tdp, reverse=True):
-                    cb = QCheckBox(str(t))
-                    self.layout.addWidget(cb)
-
-                self.layout.addWidget(QLabel("Сокет"))
-                sockets = set(map(lambda x: x[4], data))
-                for socket in sorted(sockets):
-                    cb = QCheckBox(socket)
+                self.layout.addWidget(QLabel("Мощность, Вт"))
+                powers = set(map(lambda x: x[3], data))
+                for power in sorted(powers, reverse=True):
+                    cb = QCheckBox(str(power))
                     self.layout.addWidget(cb)
 
             case "Корпус":
-                pass
+
+                self.layout.addWidget(QLabel("Бренд"))
+                brands = set(map(lambda x: x[2], data))
+                for brand in brands:
+                    cb = QCheckBox(brand)
+                    self.layout.addWidget(cb)
+
+                self.layout.addWidget(QLabel("Тип корпуса"))
+                types = set(map(lambda x: x[3], data))
+                for t in sorted(types):
+                    cb = QCheckBox(t)
+                    self.layout.addWidget(cb)
+
+                self.layout.addWidget(QLabel("Форм-фактор материнской платы"))
+                form_factors = set(map(lambda x: x[4], data))
+                for form_factor in form_factors:
+                    cb = QCheckBox(form_factor)
+                    self.layout.addWidget(cb)
 
         self.scrollArea.setWidget(self.params)
         self.layout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetMinAndMaxSize)
