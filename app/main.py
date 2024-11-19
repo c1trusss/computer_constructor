@@ -1,16 +1,36 @@
 import io
+import sqlite3
 import sys
 import time
 from datetime import datetime
 
+import selenium.webdriver.common.devtools.v125.dom
 from PyQt6 import uic, QtGui
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QFont
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QCheckBox, QFrame, QScrollArea, \
-    QLayout, QPushButton
+    QLayout, QPushButton, QDialog, QMessageBox, QHBoxLayout, QLineEdit, QFileDialog, QInputDialog, QComboBox
 
 from config import *
-from database import Database, JsonDatabase
+from database import *
+from models import *
+
+
+class ExtendedWidget(QWidget):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.db = Database()
+
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
 
 
 class Main(QMainWindow):
@@ -34,7 +54,7 @@ class Main(QMainWindow):
         self.signup.show()
 
 
-class Login(QWidget):
+class Login(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
@@ -46,17 +66,20 @@ class Login(QWidget):
         self.loginButton.clicked.connect(self.login)
 
     def login(self):
-        db = Database('constructor.sqlite')
+        db = Database()
         login = self.loginEdit.text()
         password = self.passwordEdit.text()
 
         real_password = db.execute('''SELECT password FROM users WHERE login=?''', (login,)).fetchone()
-        if real_password[0] == password:
-            self.window = Window()
-            self.hide()
-            self.window.show()
+        if not real_password:
+            self.errorLabel.setText('Пользователь не найден')
         else:
-            self.errorLabel.setText('Неверный логин или пароль')
+            if real_password[0] == password:
+                self.window = Window()
+                self.hide()
+                self.window.show()
+            else:
+                self.errorLabel.setText('Неверный логин или пароль')
 
     def to_reg(self):
         self.reg = Signup()
@@ -69,7 +92,7 @@ class Login(QWidget):
         self.main.show()
 
 
-class Signup(QWidget):
+class Signup(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
@@ -81,7 +104,7 @@ class Signup(QWidget):
         self.registerButton.clicked.connect(self.signup)
 
     def signup(self):
-        db = Database('constructor.sqlite')
+        db = Database()
         login = self.loginEdit.text()
         password = self.passwordEdit.text()
         confirmPassword = self.passwordConfirm.text()
@@ -94,9 +117,9 @@ class Signup(QWidget):
         else:
             db.execute('''INSERT INTO users (login, password, register_date) VALUES (?, ?, ?)''',
                        (login, password, str(datetime.now().date())))
+
             self.errorLabel.setText('Успешная регистрация!')
             db.commit()
-            time.sleep(2)
             self.window = Window()
             self.hide()
             self.window.show()
@@ -112,7 +135,7 @@ class Signup(QWidget):
         self.main.show()
 
 
-class Window(QWidget):
+class Window(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
@@ -129,8 +152,10 @@ class Window(QWidget):
         self.scrollArea.setWidget(self.params)
 
         self.layout = QVBoxLayout(self.params)
+        self.displayLayout = QVBoxLayout()
 
-        self.db = Database("constructor.sqlite")
+        self.db = Database()
+        self.jsondb = JsonDatabase()
 
         self.cb_change()
 
@@ -138,12 +163,42 @@ class Window(QWidget):
         self.displayItems.setStyleSheet("background-color: #49507f;")
 
         self.chooseAccessories.currentTextChanged.connect(self.cb_change)
-
         self.searchButton.clicked.connect(self.apply_changes)
+        self.adminButton.clicked.connect(self.to_admin)
+        self.createComputerButton.clicked.connect(self.create_computer)
+        self.buildsButton.clicked.connect(self.builds)
+
+    def builds(self):
+        self.build = Builds()
+        self.hide()
+        self.build.show()
+
+    def create_computer(self):
+        name, ok_pressed = QInputDialog.getText(self, "Имя сборки", "Выберите имя сборки")
+        if ok_pressed:
+            self.jsondb.data["current"]["name"] = name
+            self.statusLabel.setText('Сборка <span style="color: #18e130;">сохранена</span>! '
+                                 'Вы можете посмотреть ее в своём аккаунте')
+        self.jsondb.data["other"].append(self.jsondb.data["current"])
+        self.jsondb.data["current"] = {
+            "cpu": "",
+            "cpu_coolers": "",
+            "gpu": "",
+            "motherboards": "",
+            "ram": "",
+            "disk": "",
+            "power": "",
+            "core": ""
+        }
+        self.jsondb.dump()
+
+
+    def to_admin(self):
+        self.dlg = CodeDialog()
+        self.dlg.exec()
 
     def apply_changes(self):
         print(self.scrollArea.children())
-        db = Database("constructor.sqlite")
         current_text = self.chooseAccessories.currentText()
         table_name = COMPONENTS[current_text]
         current_parameter = ''
@@ -164,10 +219,13 @@ class Window(QWidget):
 
         query += " AND ".join(queries)
         print(query)
-        products = db.execute(query).fetchall()
+        try:
+            products = self.db.execute(query).fetchall()
+        except sqlite3.OperationalError:
+            products = []
         if products:
             main_widget = QWidget()
-            layout = QVBoxLayout(main_widget)
+            self.displayLayout = QVBoxLayout(main_widget)
             # Создание виджета для каждого найденного товара и добавление его в Vertical Layout,
             # который можно будет скроллить
             for product in products:
@@ -178,7 +236,6 @@ class Window(QWidget):
                 title = QLabel(product[1], w)
                 title.move(20, 300)
                 title.setFont(QtGui.QFont("Montserrat Medium", 12))
-
                 # Характеристики товара
                 params_widget = QWidget(w)
                 params_layout = QVBoxLayout(params_widget)
@@ -190,11 +247,18 @@ class Window(QWidget):
                 params_widget.setLayout(params_layout)
                 params_widget.move(310, 20)
 
+                # Цена товара
+                price = QLabel(f'{product[-3]} руб.', w)
+                price.move(410, 270)
+                price.setFont(QFont("Montserrat Semibold", 12))
+
                 # Кнопка "Добавить в сборку"
-                add_button = QPushButton("Добавить в сборку", w)
+                add_button = ExtendedPushButton(table_name, title.text(), "Добавить в сборку", w)
                 add_button.clicked.connect(self.add_product)
                 add_button.move(410, 310)
                 add_button.setFixedSize(171, 31)
+
+                self.displayLayout.addWidget(w)
 
                 # Ссылка на Маркет
                 link_text = 'Товар на <span style="color: red;">Я</span>.Маркете'
@@ -206,7 +270,8 @@ class Window(QWidget):
                 market_link.setFont(QFont("Montserrat Semibold", 12))
 
                 # Изображение товара
-                pixmap = QPixmap(f'images/img.jpg')
+                img = product[-1]
+                pixmap = QPixmap(f'images/{img}')
 
                 image = QLabel(w)
                 image.move(20, 20)
@@ -214,36 +279,34 @@ class Window(QWidget):
                 image.setPixmap(pixmap)
                 image.setScaledContents(True)
 
-                layout.addWidget(w)
+                self.displayLayout.addWidget(w)
 
             self.displayItems.setWidget(main_widget)
             self.displayItems.setWidgetResizable(True)
+
+            variants = ''
+            find = 'Нашлось'
+            cnt = self.displayLayout.count()
+            if cnt in range(5, 20):
+                variants = 'товаров'
+            elif cnt % 10 == 1:
+                variants = 'товар'
+                find = 'Нашёлся'
+            elif cnt % 10 in range(2, 5):
+                variants = 'товара'
+            self.statusLabel.setText(f'{find} <span style="color: #18e130;">{cnt}</span> {variants}')
         else:
-            print("Ничего не нашлось")
+            self.statusLabel.setText('<span style="color: red">Ничего не нашлось</span>')
 
     def cb_change(self):
 
         current_text = self.chooseAccessories.currentText()
 
-        # Удаление всех элементов из предыдущего layout
-        while self.layout.count():
-            item = self.layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
+        self.clear_layout(self.layout)
+        self.clear_layout(self.displayLayout)
+        self.statusLabel.setText('')
 
-        components = {
-            "Процессор": 'cpu',
-            "Материнская плата": 'motherboards',
-            "Оперативная память": 'ram',
-            "Видеокарта": 'gpu',
-            "Устройство памяти": 'disk',
-            "Блок питания": 'power',
-            "Кулер для ЦП": 'cpu_coolers',
-            "Корпус": 'core',
-        }
-
-        data = self.db.execute(f"""SELECT * FROM {components[current_text]}""").fetchall()
+        data = self.db.execute(f"""SELECT * FROM {COMPONENTS[current_text]}""").fetchall()
 
         match current_text:
             case "Процессор":
@@ -315,14 +378,8 @@ class Window(QWidget):
                     cb = QCheckBox(chipset)
                     self.layout.addWidget(cb)
 
-                self.layout.addWidget(QLabel("Беспроводные интерфейсы"))
-                interfaces = set(map(lambda x: x[5], data))
-                for interface in interfaces:
-                    cb = QCheckBox(interface)
-                    self.layout.addWidget(cb)
-
                 self.layout.addWidget(QLabel("Форм-фактор"))
-                form_factors = set(map(lambda x: x[6], data))
+                form_factors = set(map(lambda x: x[5], data))
                 for form_factor in form_factors:
                     cb = QCheckBox(form_factor)
                     self.layout.addWidget(cb)
@@ -433,7 +490,179 @@ class Window(QWidget):
         self.scrollArea.setWidgetResizable(False)
 
     def add_product(self):
-        pass
+
+        self.jsondb.data["current"][self.sender().component_type] = self.sender().component_title
+        self.jsondb.dump()
+
+        self.statusLabel.setText('Успешно <span style="color: #18e130;">добавлено</span>!')
+
+
+class CodeDialog(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('code_dialog.ui', self)
+        self.setFixedSize(445, 115)
+
+        self.enterButton.clicked.connect(self.enter)
+        self.backButton.clicked.connect(self.back)
+
+    def enter(self):
+        code = self.codeEdit.text()
+        if code == ADMIN_KEY:
+            self.admin_window = Admin()
+            self.admin_window.show()
+            self.close()
+        else:
+            self.errorLabel.setText("Неверный код!")
+
+    def back(self):
+        self.close()
+
+
+class Admin(ExtendedWidget):
+
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('admin.ui', self)
+        self.setFixedSize(457, 547)
+
+        self.widget.setStyleSheet("font: black")
+
+        self.db = Database()
+        self.table = ''
+
+        self.chooseComponent.currentTextChanged.connect(self.comp_change)
+        self.addButton.clicked.connect(self.add)
+        self.addImage.clicked.connect(self.add_image)
+
+        self.comp_change()
+
+    def add_image(self):
+        self.file_path = QFileDialog.getOpenFileName(
+            self, 'Добавить изображение', '', 'Картинка (*.jpg);;Картинка (*.png);;Все файлы (*)'
+        )[0]
+        if self.file_path:
+            self.statusLabel.setText("Изображение загружено!")
+            print(self.file_path)
+
+    def add(self):
+
+        columns = []
+        values = []
+        for hbox in self.verticalLayout.children():
+            label, edit = hbox.itemAt(0).widget(), hbox.itemAt(1).widget()
+            print(label, edit)
+            column = label.text().split()[0]
+            value = edit.text()
+
+            if value:
+                columns.append(column)
+                values.append(value)
+        query = f"""INSERT INTO {self.table}({', '.join(columns)}) VALUES ("{'", "'.join(values)}")"""
+        print(query)
+        self.db.execute(query)
+        try:
+            self.db.execute(f"""UPDATE {self.table}
+                                SET image = "{self.file_path.split('/')[-1]}"
+                                WHERE title = "{values[0]}" """)
+            self.db.commit()
+            self.statusLabel.setText("Запись добавлена!")
+        except sqlite3.IntegrityError:
+            self.statusLabel.setText("Ошибка: такое имя уже существует")
+
+    def comp_change(self):
+
+        self.clear_layout(self.verticalLayout)
+
+        current_text = self.chooseComponent.currentText()
+        self.table = COMPONENTS[current_text]
+        columns = self.db.columns(self.table)
+
+        # Берутся все столбцы, кроме первичного ключа и пути к изображению
+        for column in columns[1:-1]:
+            hbox = QHBoxLayout()
+            hbox.addWidget(QLabel(f"{column} = "))
+            hbox.addWidget(QLineEdit())
+            self.verticalLayout.addLayout(hbox)
+
+        self.widget.setLayout(self.verticalLayout)
+
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
+
+
+class Builds(ExtendedWidget):
+
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('builds.ui', self)
+        self.setFixedSize(1031, 586)
+
+        self.db = Database()
+        self.jsondb = JsonDatabase()
+
+        self.build_names = self.jsondb.get_build_names()
+
+        self.params = QVBoxLayout()
+        self.txt_format = ''
+
+        self.chooseBuild.addItems(self.build_names)
+        self.chooseBuild.currentTextChanged.connect(self.build_change)
+        self.downloadButton.clicked.connect(self.download)
+        self.backButton.clicked.connect(self.back)
+
+        self.build_change()
+
+    def back(self):
+        self.w = Window()
+        self.hide()
+        self.w.show()
+
+    def build_change(self):
+        build_name = self.chooseBuild.currentText()
+        print(build_name)
+        build = self.jsondb.build_by_name(build_name)
+        self.clear_layout(self.params)
+
+        total_cost = 0
+        self.txt_format = ''
+        for param, value in build.items():
+            p = Parameter(param)
+            table_name = param
+            c = Component(table_name, value)
+            if param == 'name':
+                continue
+            cost = c.get_cost()
+            if cost == 0:
+                continue
+            total_cost += cost
+            product_label = f"{p.get_name()}: {value}"
+            string = f"{product_label:.<{120 - len(str(cost))}}{cost}"
+            self.txt_format += string + '\n'
+            label = QLabel(string)
+            label.setFont(QFont("Courier"))
+            print(len(label.text()))
+            self.params.addWidget(label)
+
+        string = f"Итого: {total_cost} рублей"
+        self.txt_format += '\n' + string
+        self.params.addWidget(QLabel(string))
+
+        self.buildDisplay.setLayout(self.params)
+
+    def download(self):
+        file_path = QFileDialog.getSaveFileName(self, 'Скачать результат', '', 'Текстовый документ (*.txt)')[0]
+        if file_path:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(self.txt_format)
 
 
 def except_hook(cls, exception, traceback):

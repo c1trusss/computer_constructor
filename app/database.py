@@ -4,8 +4,8 @@ import sqlite3
 
 class Database:
 
-    def __init__(self, db_name: str):
-        self.db_name = db_name
+    def __init__(self):
+        self.db_name = 'constructor.sqlite'
         self.connection = sqlite3.connect(self.db_name)
 
     def columns(self, table):
@@ -23,7 +23,6 @@ class Database:
 
     def commit(self):
         self.connection.commit()
-
 
 class JsonDatabase:
 
@@ -62,6 +61,17 @@ class JsonDatabase:
 
         self.data[new_id] = computer
 
+        self.dump()
+
+    def get_build_names(self):
+        return list(map(lambda x: x["name"], self.data["other"]))
+
+    def build_by_name(self, name):
+        for build in self.data["other"]:
+            if build["name"] == name:
+                return build
+
+    def dump(self):
         with open("computers.json", "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=4, ensure_ascii=False)
 

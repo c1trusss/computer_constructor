@@ -1,1 +1,15 @@
-{}
+{
+    "current": {
+        "cpu": "",
+        "cpu_coolers": "",
+        "gpu": "",
+        "motherboards": "",
+        "ram": "",
+        "disk": "",
+        "power": "",
+        "core": ""
+    },
+    "other": [
+
+    ]
+}
