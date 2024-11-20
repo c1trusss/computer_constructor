@@ -1,6 +1,6 @@
 {
     "current": {
-        "cpu": "Intel Core i5-13600KF",
+        "cpu": "",
         "cpu_coolers": "",
         "gpu": "",
         "motherboards": "",
@@ -9,17 +9,5 @@
         "power": "",
         "core": ""
     },
-    "other": [
-        {
-            "cpu": "Intel Core i9-12900KF",
-            "cpu_coolers": "ARCTIC Freezer i35 CO",
-            "gpu": "Gigabyte GeForce RTX 4070 SUPER",
-            "motherboards": "GIGABYTE B450 AORUS ELITE V2",
-            "ram": "Kingston SO-DIMM DDR5 32Gb(2x16Gb)",
-            "disk": "Toshiba DT01ACA050",
-            "power": "BE Quiet! SYSTEM POWER 10",
-            "core": "Zalman I3 NEO",
-            "name": "Моя сборка"
-        }
-    ]
+    "other": []
 }

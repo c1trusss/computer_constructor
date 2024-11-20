@@ -43,8 +43,8 @@ class Main(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.signup = None
-        self.login = None
+        self.sign = None
+        self.log = None
         uic.loadUi('ui/main.ui', self)
 
         self.loginButton.clicked.connect(self.login)
@@ -52,14 +52,14 @@ class Main(QMainWindow):
         self.setFixedSize(1031, 586)
 
     def login(self):
-        self.login = Login()
+        self.log = Login()
         self.hide()
-        self.login.show()
+        self.log.show()
 
     def signup(self):
-        self.signup = Signup()
+        self.sign = Signup()
         self.hide()
-        self.signup.show()
+        self.sign.show()
 
 
 class Login(ExtendedWidget):

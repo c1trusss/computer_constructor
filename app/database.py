@@ -64,7 +64,10 @@ class JsonDatabase:
         self.dump()
 
     def get_build_names(self):
-        return list(map(lambda x: x["name"], self.data["other"]))
+        try:
+            return list(map(lambda x: x["name"], self.data["other"]))
+        except KeyError:  # Ошибка вызывается, если человек попытается открыть свои сборки, не сохранив ни одну из них
+            return []
 
     def build_by_name(self, name):
         for build in self.data["other"]:
