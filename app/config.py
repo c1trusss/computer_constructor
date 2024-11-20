@@ -37,7 +37,6 @@ PARAMS = {
         "Бренд": "brand",
         "Сокет": "socket",
         "Чипсет": "chipset",
-        "Беспроводные интерфейсы": "interfaces",
         "Форм-фактор": "form_factor"
     },
     "ram": {

@@ -533,7 +533,7 @@ class Admin(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('ui/admin.ui', self)
+        uic.loadUi('app/ui/admin.ui', self)
         self.setFixedSize(457, 547)
 
         self.widget.setStyleSheet("font: black")
@@ -617,7 +617,7 @@ class Builds(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('ui/builds.ui', self)
+        uic.loadUi('app/ui/builds.ui', self)
         self.setFixedSize(1031, 586)
 
         self.db = Database()
