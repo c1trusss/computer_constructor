@@ -28,7 +28,6 @@ class Component:
         try:
             response = db.execute(f"""SELECT cost FROM {self.table_name} WHERE title="{self.component_title}" """)
             cost = int(response.fetchone()[0])
-
         except TypeError:
             cost = 0
 

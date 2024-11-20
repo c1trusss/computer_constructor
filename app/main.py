@@ -1,15 +1,20 @@
-import io
-import sqlite3
 import sys
-import time
 from datetime import datetime
 
-import selenium.webdriver.common.devtools.v125.dom
 from PyQt6 import uic, QtGui
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QFont
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QCheckBox, QFrame, QScrollArea, \
-    QLayout, QPushButton, QDialog, QMessageBox, QHBoxLayout, QLineEdit, QFileDialog, QInputDialog, QComboBox
+from PyQt6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QCheckBox,
+    QDialog,
+    QHBoxLayout,
+    QLineEdit,
+    QFileDialog,
+    QInputDialog)
 
 from config import *
 from database import *
@@ -563,17 +568,17 @@ class Admin(ExtendedWidget):
             if value:
                 columns.append(column)
                 values.append(value)
-        query = f"""INSERT INTO {self.table}({', '.join(columns)}) VALUES ("{'", "'.join(values)}")"""
-        print(query)
-        self.db.execute(query)
         try:
-            self.db.execute(f"""UPDATE {self.table}
-                                SET image = "{self.file_path.split('/')[-1]}"
-                                WHERE title = "{values[0]}" """)
-            self.db.commit()
-            self.statusLabel.setText("Запись добавлена!")
+            query = f"""INSERT INTO {self.table}({', '.join(columns)}) VALUES ("{'", "'.join(values)}")"""
+            self.db.execute(query)
         except sqlite3.IntegrityError:
             self.statusLabel.setText("Ошибка: такое имя уже существует")
+
+        self.db.execute(f"""UPDATE {self.table}
+                            SET image = "{self.file_path.split('/')[-1]}"
+                            WHERE title = "{values[0]}" """)
+        self.db.commit()
+        self.statusLabel.setText("Запись добавлена!")
 
     def comp_change(self):
 
