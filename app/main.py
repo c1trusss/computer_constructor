@@ -169,7 +169,11 @@ class Window(ExtendedWidget):
         self.buildsButton.clicked.connect(self.builds)
 
     def builds(self):
-        self.build = Builds()
+        try:
+            self.build = Builds()
+        except BuildNotFoundError:
+            self.statusLabel.setText('Сохранённых сборок <span style="color: red;">не найдено</span>')
+            return
         self.hide()
         self.build.show()
 
@@ -630,6 +634,8 @@ class Builds(ExtendedWidget):
         build_name = self.chooseBuild.currentText()
         print(build_name)
         build = self.jsondb.build_by_name(build_name)
+        if not build:
+            raise BuildNotFoundError("Активных сборок не найдено")
         self.clear_layout(self.params)
 
         total_cost = 0
@@ -645,7 +651,7 @@ class Builds(ExtendedWidget):
                 continue
             total_cost += cost
             product_label = f"{p.get_name()}: {value}"
-            string = f"{product_label:.<{120 - len(str(cost))}}{cost}"
+            string = f"{product_label:.<{135 - len(str(cost))}}{cost}"
             self.txt_format += string + '\n'
             label = QLabel(string)
             label.setFont(QFont("Courier"))

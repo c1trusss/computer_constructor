@@ -4,6 +4,10 @@ from database import Database
 from config import COMPONENTS
 
 
+class BuildNotFoundError(AttributeError):
+    pass
+
+
 class ExtendedPushButton(QPushButton):
 
     def __init__(self, component_type, component_title, *args):
