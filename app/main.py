@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import datetime
 
@@ -42,6 +43,8 @@ class Main(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.signup = None
+        self.login = None
         uic.loadUi('ui/main.ui', self)
 
         self.loginButton.clicked.connect(self.login)
@@ -63,6 +66,9 @@ class Login(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
+        self.main = None
+        self.reg = None
+        self.window = None
         uic.loadUi('ui/loginform.ui', self)
         self.setFixedSize(1031, 586)
 
@@ -101,6 +107,9 @@ class Signup(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
+        self.main = None
+        self.login = None
+        self.window = None
         uic.loadUi('ui/signupform.ui', self)
         self.setFixedSize(1031, 586)
 
@@ -112,12 +121,12 @@ class Signup(ExtendedWidget):
         db = Database()
         login = self.loginEdit.text()
         password = self.passwordEdit.text()
-        confirmPassword = self.passwordConfirm.text()
+        confirm_password = self.passwordConfirm.text()
 
         logins = map(lambda x: x[0], db.execute("""SELECT login FROM users""").fetchall())
         if login in logins:
             self.errorLabel.setText('Логин уже занят')
-        elif password != confirmPassword:
+        elif password != confirm_password:
             self.errorLabel.setText('Пароли не совпадают')
         else:
             db.execute('''INSERT INTO users (login, password, register_date) VALUES (?, ?, ?)''',
@@ -144,6 +153,8 @@ class Window(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
+        self.dlg = None
+        self.build = None
         uic.loadUi('ui/window.ui', self)
         self.setFixedSize(1031, 586)
 
@@ -187,7 +198,7 @@ class Window(ExtendedWidget):
         if ok_pressed:
             self.jsondb.data["current"]["name"] = name
             self.statusLabel.setText('Сборка <span style="color: #18e130;">сохранена</span>! '
-                                 'Вы можете посмотреть ее в своём аккаунте')
+                                     'Вы можете посмотреть ее в своём аккаунте')
         self.jsondb.data["other"].append(self.jsondb.data["current"])
         self.jsondb.data["current"] = {
             "cpu": "",
@@ -200,7 +211,6 @@ class Window(ExtendedWidget):
             "core": ""
         }
         self.jsondb.dump()
-
 
     def to_admin(self):
         self.dlg = CodeDialog()
@@ -226,7 +236,7 @@ class Window(ExtendedWidget):
         if cb_group:
             queries.append(f"({' OR '.join(cb_group)})")
 
-        query += " AND ".join(queries)
+        query += ' AND '.join(queries)
         print(query)
         try:
             products = self.db.execute(query).fetchall()
@@ -510,6 +520,7 @@ class CodeDialog(QDialog):
 
     def __init__(self):
         super().__init__()
+        self.admin_window = None
         uic.loadUi('ui/code_dialog.ui', self)
         self.setFixedSize(445, 115)
 
@@ -533,7 +544,8 @@ class Admin(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('app/ui/admin.ui', self)
+        self.file_path = ''
+        uic.loadUi('ui/admin.ui', self)
         self.setFixedSize(457, 547)
 
         self.widget.setStyleSheet("font: black")
@@ -554,8 +566,12 @@ class Admin(ExtendedWidget):
         msg.exec()
 
         self.file_path = QFileDialog.getOpenFileName(
-            self, 'Добавить изображение', '', 'Картинка (*.jpg);;Картинка (*.png);;Все файлы (*)'
+            self,
+            'Добавить изображение',
+            os.curdir + '/images', 
+            'Изображение (*.png);;Изображение (*.jpg);;Все файлы (*)'
         )[0]
+        
         if self.file_path:
             self.statusLabel.setText("Изображение загружено!")
             print(self.file_path)
@@ -617,7 +633,8 @@ class Builds(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('app/ui/builds.ui', self)
+        self.w = None
+        uic.loadUi('ui/builds.ui', self)
         self.setFixedSize(1031, 586)
 
         self.db = Database()
