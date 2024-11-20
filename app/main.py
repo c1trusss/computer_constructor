@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QFileDialog,
-    QInputDialog)
+    QInputDialog, QMessageBox)
 
 from config import *
 from database import *
@@ -42,7 +42,7 @@ class Main(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('main.ui', self)
+        uic.loadUi('ui/main.ui', self)
 
         self.loginButton.clicked.connect(self.login)
         self.signupButton.clicked.connect(self.signup)
@@ -63,7 +63,7 @@ class Login(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('loginform.ui', self)
+        uic.loadUi('ui/loginform.ui', self)
         self.setFixedSize(1031, 586)
 
         self.backButton.clicked.connect(self.back)
@@ -101,7 +101,7 @@ class Signup(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('signupform.ui', self)
+        uic.loadUi('ui/signupform.ui', self)
         self.setFixedSize(1031, 586)
 
         self.backButton.clicked.connect(self.back)
@@ -144,7 +144,7 @@ class Window(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('window.ui', self)
+        uic.loadUi('ui/window.ui', self)
         self.setFixedSize(1031, 586)
 
         self.scrollArea.setStyleSheet('background-color: #49507f')
@@ -510,7 +510,7 @@ class CodeDialog(QDialog):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('code_dialog.ui', self)
+        uic.loadUi('ui/code_dialog.ui', self)
         self.setFixedSize(445, 115)
 
         self.enterButton.clicked.connect(self.enter)
@@ -533,7 +533,7 @@ class Admin(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('admin.ui', self)
+        uic.loadUi('ui/admin.ui', self)
         self.setFixedSize(457, 547)
 
         self.widget.setStyleSheet("font: black")
@@ -548,6 +548,11 @@ class Admin(ExtendedWidget):
         self.comp_change()
 
     def add_image(self):
+
+        msg = QMessageBox()
+        msg.setText("Важно: Загружайте файлы только из папки <b>images</b>!")
+        msg.exec()
+
         self.file_path = QFileDialog.getOpenFileName(
             self, 'Добавить изображение', '', 'Картинка (*.jpg);;Картинка (*.png);;Все файлы (*)'
         )[0]
@@ -612,7 +617,7 @@ class Builds(ExtendedWidget):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi('builds.ui', self)
+        uic.loadUi('ui/builds.ui', self)
         self.setFixedSize(1031, 586)
 
         self.db = Database()
