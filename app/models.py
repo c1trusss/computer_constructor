@@ -26,6 +26,7 @@ class Component:
         db = Database()
         print(f"""SELECT cost FROM {self.table_name} WHERE title="{self.component_title}" """)
         try:
+            print(self.table_name, self.component_title)
             response = db.execute(f"""SELECT cost FROM {self.table_name} WHERE title="{self.component_title}" """)
             cost = int(response.fetchone()[0])
         except TypeError:

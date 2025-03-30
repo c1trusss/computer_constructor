@@ -9,5 +9,50 @@
         "power": "",
         "core": ""
     },
-    "other": []
+    "other": [
+        {
+            "cpu": "Intel Core i5-13600KF",
+            "cpu_coolers": "ARCTIC Freezer i35 CO",
+            "gpu": "Asrock Radeon RX 7700 XT STEEL LEGEND",
+            "motherboards": "GIGABYTE B450 AORUS ELITE V2",
+            "ram": "32Gb DDR4 3200MHz Samsung",
+            "disk": "WD Blue WD40EZAX",
+            "power": "BE Quiet! SYSTEM POWER 10",
+            "core": "Zalman I3 NEO",
+            "name": ""
+        },
+        {
+            "cpu": "Intel Core i5-13600KF",
+            "cpu_coolers": "ARCTIC Freezer i35 CO",
+            "gpu": "Palit RTX4060 DUAL",
+            "motherboards": "",
+            "ram": "",
+            "disk": "",
+            "power": "",
+            "core": "",
+            "name": "моя сборка"
+        },
+        {
+            "cpu": "Intel Core i7-12700F",
+            "cpu_coolers": "Arctic Freezer 36 A-RGB",
+            "gpu": "Asrock Radeon RX 7700 XT STEEL LEGEND",
+            "motherboards": "ASUS ROG STRIX B760-G GAMING WIFI D4 Retail",
+            "ram": "",
+            "disk": "WD Purple 3.5\" 5400",
+            "power": "",
+            "core": "AeroCool NightHawk Duo-G-BK",
+            "name": "zxc"
+        },
+        {
+            "cpu": "Intel Core i5-13600KF",
+            "cpu_coolers": "",
+            "gpu": "",
+            "motherboards": "",
+            "ram": "",
+            "disk": "",
+            "power": "",
+            "core": "",
+            "name": "c1111"
+        }
+    ]
 }
